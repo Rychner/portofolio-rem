@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Royal Estate Investment — Company Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C9A84C;
+      --dark: #0e0e0e;
+      --navy: #1a1f2e;
+      --light: #f7f5f0;
+      --slide-ratio: calc(9 / 16);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--dark);
+      font-family: 'DM Sans', sans-serif;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    /* ── PRESENTATION WRAPPER ── */
+    #presentation {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── SLIDE STAGE ── */
+    #stage {
+      position: relative;
+      width: min(100vw, calc(100vh / var(--slide-ratio)));
+      height: min(100vh, calc(100vw * var(--slide-ratio)));
+      background: #000;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,.8);
+    }
+
+    /* ── INDIVIDUAL SLIDE ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      transform: translateX(60px);
+    }
+    .slide img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+    .slide.prev {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    /* ── NAVIGATION ARROWS ── */
+    .nav-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      background: rgba(201,168,76,.15);
+      border: 1px solid rgba(201,168,76,.4);
+      color: var(--gold);
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background .25s, transform .25s;
+      backdrop-filter: blur(6px);
+    }
+    .nav-btn:hover {
+      background: rgba(201,168,76,.35);
+      transform: translateY(-50%) scale(1.1);
+    }
+    .nav-btn:active { transform: translateY(-50%) scale(0.95); }
+    #btn-prev { left: 18px; }
+    #btn-next { right: 18px; }
+    .nav-btn svg { width: 20px; height: 20px; }
+    .nav-btn.disabled { opacity: 0.25; pointer-events: none; }
+
+    /* ── SLIDE COUNTER ── */
+    #counter {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.25);
+      transition: background .3s, transform .3s;
+      cursor: pointer;
+    }
+    .dot.active {
+      background: var(--gold);
+      transform: scale(1.4);
+    }
+    .dot:hover:not(.active) { background: rgba(255,255,255,.55); }
+
+    /* ── SLIDE NUMBER LABEL ── */
+    #slide-label {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 100;
+      font-family: 'Playfair Display', serif;
+      font-size: 12px;
+      letter-spacing: .12em;
+      color: rgba(201,168,76,.8);
+      text-transform: uppercase;
+    }
+
+    /* ── KEYBOARD HINT ── */
+    #hint {
+      position: fixed;
+      bottom: 48px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      font-size: 11px;
+      color: rgba(255,255,255,.3);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: opacity 1s;
+    }
+    #hint.fade { opacity: 0; }
+
+    /* ── TOUCH SWIPE (mobile) ── */
+    /* handled via JS */
+
+    /* ── FULLSCREEN BUTTON ── */
+    #btn-fullscreen {
+      position: fixed;
+      top: 16px;
+      left: 18px;
+      z-index: 100;
+      background: rgba(201,168,76,.12);
+      border: 1px solid rgba(201,168,76,.3);
+      color: var(--gold);
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background .25s;
+      backdrop-filter: blur(6px);
+    }
+    #btn-fullscreen:hover { background: rgba(201,168,76,.28); }
+    #btn-fullscreen svg { width: 16px; height: 16px; }
+
+    /* ── PROGRESS BAR ── */
+    #progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: var(--gold);
+      transition: width .5s ease;
+      z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress"></div>
+
+  <div id="presentation">
+    <div id="stage">
+      <!-- Slides injected by JS -->
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <button class="nav-btn disabled" id="btn-prev" aria-label="Previous slide">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+  <button class="nav-btn" id="btn-next" aria-label="Next slide">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  </button>
+
+  <!-- Fullscreen -->
+  <button id="btn-fullscreen" aria-label="Toggle fullscreen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+      <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+    </svg>
+  </button>
+
+  <!-- Counter dots -->
+  <div id="counter"></div>
+
+  <!-- Slide label -->
+  <div id="slide-label"></div>
+
+  <!-- Keyboard hint -->
+  <div id="hint">← → Arrow keys or click arrows to navigate</div>
+
+  <script>
+    const TOTAL = 15;
+    let current = 0;
+    let prevIdx = -1;
+
+    const stage = document.getElementById('stage');
+    const counter = document.getElementById('counter');
+    const label = document.getElementById('slide-label');
+    const progress = document.getElementById('progress');
+    const hint = document.getElementById('hint');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+
+    // ── Build slides ──
+    const slides = [];
+    for (let i = 1; i <= TOTAL; i++) {
+      const div = document.createElement('div');
+      div.className = 'slide';
+      div.dataset.index = i - 1;
+
+      const img = document.createElement('img');
+      // zero-padded filename: slide-01.jpg … slide-15.jpg
+      img.src = `slides/slide-${String(i).padStart(2,'0')}.jpg`;
+      img.alt = `Slide ${i}`;
+      img.loading = i === 1 ? 'eager' : 'lazy';
+      img.draggable = false;
+
+      div.appendChild(img);
+      stage.appendChild(div);
+      slides.push(div);
+    }
+
+    // ── Build dots ──
+    const dots = [];
+    for (let i = 0; i < TOTAL; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.addEventListener('click', () => goTo(i));
+      counter.appendChild(dot);
+      dots.push(dot);
+    }
+
+    // ── Navigate ──
+    function goTo(idx) {
+      if (idx < 0 || idx >= TOTAL || idx === current) return;
+
+      // Manage direction class
+      const direction = idx > current ? 1 : -1;
+
+      // Remove prev class from old previous
+      if (prevIdx >= 0 && prevIdx !== current) {
+        slides[prevIdx].classList.remove('prev');
+      }
+
+      // Outgoing slide
+      slides[current].classList.remove('active');
+      slides[current].classList.add('prev');
+      prevIdx = current;
+
+      // Reset transform direction for incoming
+      slides[idx].style.transform = direction > 0 ? 'translateX(60px)' : 'translateX(-60px)';
+
+      // Force reflow
+      slides[idx].getBoundingClientRect();
+
+      current = idx;
+      slides[current].classList.add('active');
+
+      // Clean up prev after transition
+      setTimeout(() => {
+        if (prevIdx >= 0) slides[prevIdx].classList.remove('prev');
+        slides[idx].style.transform = '';
+      }, 650);
+
+      updateUI();
+    }
+
+    function updateUI() {
+      // Dots
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+
+      // Label
+      label.textContent = `${current + 1} / ${TOTAL}`;
+
+      // Progress bar
+      progress.style.width = `${((current + 1) / TOTAL) * 100}%`;
+
+      // Buttons
+      btnPrev.classList.toggle('disabled', current === 0);
+      btnNext.classList.toggle('disabled', current === TOTAL - 1);
+    }
+
+    // ── Keyboard ──
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        goTo(current + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        goTo(current - 1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goTo(TOTAL - 1);
+      }
+      dismissHint();
+    });
+
+    // ── Buttons ──
+    btnPrev.addEventListener('click', () => { goTo(current - 1); dismissHint(); });
+    btnNext.addEventListener('click', () => { goTo(current + 1); dismissHint(); });
+
+    // ── Touch / swipe ──
+    let touchStartX = 0;
+    stage.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    stage.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) { dx < 0 ? goTo(current + 1) : goTo(current - 1); dismissHint(); }
+    }, { passive: true });
+
+    // ── Click on slide to advance ──
+    stage.addEventListener('click', e => {
+      const half = stage.offsetWidth / 2;
+      e.clientX - stage.getBoundingClientRect().left > half ? goTo(current + 1) : goTo(current - 1);
+      dismissHint();
+    });
+
+    // ── Fullscreen ──
+    document.getElementById('btn-fullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // ── Hint auto-hide ──
+    let hintTimer = setTimeout(dismissHint, 4000);
+    function dismissHint() {
+      clearTimeout(hintTimer);
+      hint.classList.add('fade');
+    }
+
+    // ── Init ──
+    slides[0].classList.add('active');
+    updateUI();
+  </script>
+</body>
+</html>
